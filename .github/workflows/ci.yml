@@ -15,6 +15,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npx wxt prepare
       - run: npx tsc --noEmit
       - run: npm run build
       - name: Assert no secrets in build output
