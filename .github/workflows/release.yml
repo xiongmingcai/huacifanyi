@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run build
+
+      - name: Assert no secrets in build output
+        run: |
+          if grep -rE "sk-[a-zA-Z0-9]{16,}" .output/; then
+            echo "::error::API key leaked into build output"
+            exit 1
+          fi
+
+      - name: Package
+        run: |
+          cd .output
+          zip -r "../huacifanyi-${GITHUB_REF_NAME}-chrome.zip" chrome-mv3
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: huacifanyi-*-chrome.zip
+          generate_release_notes: true
